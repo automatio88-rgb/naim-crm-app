@@ -4,6 +4,8 @@ import Select from '../ui/Select'
 import Textarea from '../ui/Textarea'
 import Button from '../ui/Button'
 import { addCandidate, updateCandidate } from '../../services/candidateService'
+import { isSupabaseConfigured } from '../../supabase/client'
+import { demoCandidatesList } from '../../services/demoData'
 import { useToast } from '../../contexts/ToastContext'
 import { CANDIDATE_STAGES, COUNTRIES, CURRENCIES } from '../../utils/constants'
 
@@ -45,6 +47,30 @@ export default function CandidateForm({ candidate, onSave, onCancel }) {
     if (!form.name) return toast.error('Name is required')
     setLoading(true)
     try {
+      if (!isSupabaseConfigured) {
+        // Demo mode — mutate the local demo dataset
+        if (candidate?.id) {
+          const demo = demoCandidatesList.find((c) => c.id === candidate.id)
+          if (demo) Object.assign(demo, form, { updated_at: new Date().toISOString() })
+          toast.success('Candidate updated!')
+        } else {
+          demoCandidatesList.unshift({
+            id: `dc-new-${Date.now()}`,
+            emergency_contact: 'N/A', departure: 'Not set', company: 'N/A',
+            city: 'N/A', added: new Date().toLocaleDateString(),
+            position: form.work_position || form.job_title || 'N/A',
+            salary: form.salary ? `${form.currency} ${form.salary}` : 'N/A',
+            status: form.stage,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            deleted_at: null,
+            ...form,
+          })
+          toast.success('Candidate added!')
+        }
+        onSave()
+        return
+      }
       if (candidate?.id) {
         await updateCandidate(candidate.id, form)
         toast.success('Candidate updated!')
