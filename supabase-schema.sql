@@ -3,6 +3,7 @@
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
 -- =====================================================
 -- USERS PROFILES (extends auth.users)
@@ -169,7 +170,7 @@ CREATE TABLE cv_drafts (
   education TEXT,
   skills TEXT,
   languages TEXT,
-  references TEXT,
+  "references" TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
