@@ -1,0 +1,42 @@
+# Hermes Agent Configuration for Naim CRM
+# Copy to ~/.hermes/config.yaml after installing Hermes Agent
+
+# ============================================================
+# MCP SERVER - Naim CRM
+# ============================================================
+mcp_servers:
+  naim_crm:
+    command: "python"
+    args: ["/home/riq/naim-crm-app/mcp-server/server.py"]
+    env:
+      SUPABASE_URL: "${SUPABASE_URL}"
+      SUPABASE_KEY: "${SUPABASE_KEY}"
+    timeout: 30
+    connect_timeout: 10
+    tools:
+      prompts: false
+      resources: false
+
+# ============================================================
+# TELEGRAM
+# ============================================================
+# Add these to ~/.hermes/.env:
+# TELEGRAM_BOT_TOKEN=your_bot_token_from_botfather
+# TELEGRAM_ALLOWED_USERS=your_telegram_user_id
+
+# ============================================================
+# LLM PROVIDER
+# ============================================================
+# Add your preferred provider to ~/.hermes/.env:
+# OPENAI_API_KEY=sk-...
+# ANTHROPIC_API_KEY=sk-ant-...
+
+# ============================================================
+# DISPLAY
+# ============================================================
+display:
+  tool_progress: new
+  platforms:
+    telegram:
+      tool_progress: new
+      busy_ack_detail: true
