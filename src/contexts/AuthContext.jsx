@@ -1,14 +1,24 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { supabase } from '../supabase/client'
+import { supabase, isSupabaseConfigured } from '../supabase/client'
 
 const AuthContext = createContext(null)
 
+const DEMO_USER = { id: 'demo-admin', email: 'admin@naiminvestments.com' }
+const DEMO_PROFILE = {
+  id: 'demo-admin',
+  display_name: 'Admin',
+  role: 'admin',
+  page_permissions: ['dashboard', 'candidates', 'jobs', 'appointments', 'tasks', 'documents', 'reports', 'settings', 'associates', 'cv-builder', 'job-generator', 'receptionist-view', 'recycle-bin'],
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [userProfile, setUserProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(isSupabaseConfigured ? null : DEMO_USER)
+  const [userProfile, setUserProfile] = useState(isSupabaseConfigured ? null : DEMO_PROFILE)
+  const [loading, setLoading] = useState(isSupabaseConfigured)
 
   useEffect(() => {
+    if (!isSupabaseConfigured) return
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
@@ -38,12 +48,22 @@ export function AuthProvider({ children }) {
   }
 
   async function login(email, password) {
+    if (!isSupabaseConfigured) {
+      setUser(DEMO_USER)
+      setUserProfile(DEMO_PROFILE)
+      return { user: DEMO_USER }
+    }
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
     return data
   }
 
   async function register(email, password, displayName) {
+    if (!isSupabaseConfigured) {
+      setUser(DEMO_USER)
+      setUserProfile(DEMO_PROFILE)
+      return { user: DEMO_USER }
+    }
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -62,18 +82,22 @@ export function AuthProvider({ children }) {
   }
 
   async function logout() {
-    await supabase.auth.signOut()
+    if (isSupabaseConfigured) {
+      await supabase.auth.signOut()
+    }
     setUser(null)
     setUserProfile(null)
   }
 
   async function updateProfile(updates) {
     if (!user) return
-    const { error } = await supabase
-      .from('users_profiles')
-      .update(updates)
-      .eq('id', user.id)
-    if (error) throw error
+    if (isSupabaseConfigured) {
+      const { error } = await supabase
+        .from('users_profiles')
+        .update(updates)
+        .eq('id', user.id)
+      if (error) throw error
+    }
     setUserProfile((prev) => ({ ...prev, ...updates }))
   }
 
@@ -92,7 +116,7 @@ export function AuthProvider({ children }) {
         updateProfile,
         isAdmin,
         isManager,
-        refreshProfile: () => user && fetchProfile(user.id),
+        refreshProfile: () => isSupabaseConfigured && user && fetchProfile(user.id),
       }}
     >
       {children}
